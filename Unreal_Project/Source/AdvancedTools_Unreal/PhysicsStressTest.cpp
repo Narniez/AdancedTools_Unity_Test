@@ -12,12 +12,16 @@ APhysicsStressTest::APhysicsStressTest()
 
 void APhysicsStressTest::BeginPlay()
 {
+    // Force VSync OFF to measure raw performance
+    GEngine->Exec(GetWorld(), TEXT("r.VSync 0"));
     Super::BeginPlay();
-    RunTest();
+    
 }
 
-void APhysicsStressTest::RunTest()
+void APhysicsStressTest::StartTest(int32 NewCount)
 {
+    TargetObjectCount = NewCount;
+
     for (AActor* Actor : SpawnedActors)
     {
         if (Actor) Actor->Destroy();
@@ -33,17 +37,18 @@ void APhysicsStressTest::RunTest()
     }
 
     CurrentSpawnCount = 0;
-    bIsSpawning = true;  
-    bIsRecording = false;  
+    bIsSpawning = true;
+    bIsRecording = false;
     Timer = 0.0f;
 
-    UE_LOG(LogTemp, Warning, TEXT("Starting Stream Spawn..."));
+    UE_LOG(LogTemp, Warning, TEXT("Starting Test with %d Objects..."), TargetObjectCount);
 }
 
 void APhysicsStressTest::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    //SPAWNING
     if (bIsSpawning)
     {
         int32 RowSize = 10;
@@ -55,14 +60,12 @@ void APhysicsStressTest::Tick(float DeltaTime)
                 bIsSpawning = false;
                 bIsRecording = true;
                 Timer = 0.0f;
-                UE_LOG(LogTemp, Warning, TEXT("Spawning Finished. Starting Recording."));
                 return;
             }
 
             float X = (CurrentSpawnCount % RowSize) * Spacing;
             float Y = 0.0f;
             float Z = 500.0f + ((CurrentSpawnCount / RowSize) * Spacing);
-
             X += FMath::RandRange(-10.0f, 10.0f);
 
             FVector SpawnLocation(X, Y, Z);
@@ -73,12 +76,12 @@ void APhysicsStressTest::Tick(float DeltaTime)
             {
                 SpawnedActors.Add(NewActor);
             }
-
             CurrentSpawnCount++;
         }
         return;
     }
 
+    //RECORDING DATA
     if (!bIsRecording) return;
 
     Timer += DeltaTime;

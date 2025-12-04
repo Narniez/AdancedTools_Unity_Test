@@ -19,17 +19,17 @@ public:
     virtual void Tick(float DeltaTime) override;
 
     // --- Settings ---
-    UPROPERTY(EditAnywhere, Category = "Stress Test")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stress Test")
     TSubclassOf<AActor> ObjectToSpawn;
 
-    UPROPERTY(EditAnywhere, Category = "Stress Test")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stress Test")
     int32 TargetObjectCount = 1000;
 
     UPROPERTY(EditAnywhere, Category = "Stress Test")
     float Spacing = 150.0f;
 
     UPROPERTY(EditAnywhere, Category = "Stress Test")
-    int32 SpawnsPerFrame = 20; 
+    int32 SpawnsPerFrame = 20;
 
     UPROPERTY(EditAnywhere, Category = "Stress Test")
     FString FileName = "UnrealPhysicsData.csv";
@@ -37,17 +37,17 @@ public:
     UPROPERTY(EditAnywhere, Category = "Stress Test")
     float MaxRecordingTime = 20.0f;
 
-    UFUNCTION(CallInEditor, Category = "Stress Test")
-    void RunTest();
+    UFUNCTION(BlueprintCallable, Category = "Stress Test")
+    void StartTest(int32 NewCount);
 
 private:
     void SaveData();
 
     // Internal State
-    bool bIsSpawning = false; 
+    bool bIsSpawning = false;
     bool bIsRecording = false;
     float Timer = 0.0f;
-    int32 CurrentSpawnCount = 0; 
+    int32 CurrentSpawnCount = 0;
     FString CSVContent;
     TArray<AActor*> SpawnedActors;
 };
