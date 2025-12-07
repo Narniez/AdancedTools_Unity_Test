@@ -51,5 +51,5 @@ private:
     float Timer = 0.0f;
     int currentSpawnCount = 0;
     FString CSVContent;
-    TArray<AActor*> spawnedActors;
+    TArray<AActor*> spawnedActors; 
 };

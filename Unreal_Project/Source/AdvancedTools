@@ -1,5 +1,4 @@
 #include "PhysicsStressTest.h"
-#include "Kismet/GameplayStatics.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Components/PrimitiveComponent.h"
@@ -13,13 +12,10 @@ APhysicsStressTest::APhysicsStressTest()
 
 void APhysicsStressTest::BeginPlay()
 {
-    // Force VSync OFF
     GEngine->Exec(GetWorld(), TEXT("r.VSync 0"));
     Super::BeginPlay();
 
     FString FilePath = FPaths::ProjectSavedDir() + "Logs/" + fileName;
-
-    // Only write the Header if the file doesnt exist yet
     if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*FilePath))
     {
         FString Header = "Time,ObjectCount,FPS,FrameTime(ms),TotalMemory(MB),ActiveObjects\n";
@@ -40,7 +36,7 @@ void APhysicsStressTest::StartTest(int NewCount)
     CSVContent.Empty();
 
     currentSpawnCount = 0;
-    isSpawning = true;
+    isSpawning = targetObjectCount > 0;
     isRecording = true;
     Timer = 0.0f;
 
@@ -51,16 +47,18 @@ void APhysicsStressTest::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    //Spawning logic
     if (isSpawning)
     {
-		//Spawn a set number of objects per frame to avoid engine freeze
         int toSpawnThisFrame = FMath::Min(spawnsPerFrame, targetObjectCount - currentSpawnCount);
         for (int i = 0; i < toSpawnThisFrame; i++)
         {
-            float X = (currentSpawnCount % columnNumber) * spacing;
+            int spawnedIndex = currentSpawnCount + i;
+
+            float X = (spawnedIndex % columnNumber) * spacing;
             float Y = 0.0f;
-            float Z = 500.0f + ((currentSpawnCount / columnNumber) * spacing);
+            float Z = 5.0f + (spawnedIndex / columnNumber) * spacing;
+
+            X += FMath::RandRange(-0.1f, 0.1f);
 
             FVector SpawnLocation(X, Y, Z);
             FRotator SpawnRotation = FRotator::ZeroRotator;
@@ -70,8 +68,9 @@ void APhysicsStressTest::Tick(float DeltaTime)
             {
                 spawnedActors.Add(NewActor);
             }
-            currentSpawnCount++;
         }
+
+        currentSpawnCount += toSpawnThisFrame;
 
         if (currentSpawnCount >= targetObjectCount)
         {
@@ -81,7 +80,6 @@ void APhysicsStressTest::Tick(float DeltaTime)
 
     if (!isRecording) return;
 
-    // RECORDING DATA 
     Timer += DeltaTime;
 
     if (Timer >= maxRecordingTime)
@@ -91,14 +89,13 @@ void APhysicsStressTest::Tick(float DeltaTime)
         return;
     }
 
-    float FPS = 1.0f / DeltaTime;
-    float FrameTimeMS = DeltaTime * 1000.0f;
+    float safeDelta = FMath::Max(DeltaTime, 1e-6f);
+    float FPS = 1.0f / safeDelta;
+    float FrameTimeMS = safeDelta * 1000.0f;
 
     FPlatformMemoryStats MemStats = FPlatformMemory::GetStats();
-    //convert to MB
     int TotalMemoryMB = MemStats.UsedPhysical / (1024 * 1024);
 
-    // Search for the Cube Mesh Component 
     int ActiveCount = 0;
     for (AActor* Actor : spawnedActors)
     {

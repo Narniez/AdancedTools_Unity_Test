@@ -64,7 +64,7 @@ public class PhysicsStressTest : MonoBehaviour
         // Parse target count
         if (int.TryParse(countInputField.text, out int count))
         {
-            currentTargetCount = Mathf.Max(0, count);
+            currentTargetCount = count;
         }
         else
         {
@@ -74,7 +74,7 @@ public class PhysicsStressTest : MonoBehaviour
         // Reset for new run
         currentSpawnCount = 0;
         timer = 0f;
-        isSpawning = currentTargetCount > 0;
+        if (currentTargetCount > 0) isSpawning = true;
         isRecording = true;
 
         Debug.Log($"Starting Test with {currentTargetCount} objects...");
@@ -123,9 +123,9 @@ public class PhysicsStressTest : MonoBehaviour
         // Record data every frame
         double physicsTimeMS = physicsTimeRecorder.LastValue * (1e-6);
         float frameTimeMS = Time.deltaTime * 1000.0f;
-        long memoryMB = totalMemoryRecorder.LastValue / (1024 * 1024);
+        float memoryMB = totalMemoryRecorder.LastValue / (1024 * 1024);
 
-        float fps = 1.0f / Mathf.Max(Time.deltaTime, 1e-6f);
+        float fps = 1.0f / Time.deltaTime;
 
         int activeCount = 0;
         for (int i = 0; i < activeObjects.Count; i++)
